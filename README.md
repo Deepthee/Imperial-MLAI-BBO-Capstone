@@ -2,11 +2,11 @@
 
 ## Overview
 
-This repository contains my capstone project for the **Imperial College London Professional Certificate in Machine Learning and Artificial Intelligence**.
+This repository documents my Black-Box Optimisation capstone project for the **Imperial College London Professional Certificate in Machine Learning and Artificial Intelligence**.
 
-The project focuses on solving a sequential **Black-Box Optimisation (BBO)** problem involving eight unknown objective functions. Across ten optimisation rounds, I developed and refined an Adaptive Sequential Optimisation Strategy (ASOS), inspired by Bayesian Optimisation principles, to balance exploration and exploitation across sequential optimisation rounds.
+The project involves optimising eight unknown objective functions through successive rounds of sequential query selection. I developed an **Adaptive Sequential Optimisation Strategy (ASOS)**, inspired by Bayesian Optimisation principles, to balance exploration of uncertain regions with exploitation of promising areas.
 
-Unlike traditional machine learning projects, the underlying objective functions remain unknown throughout the exercise. The optimisation process therefore required informed decision-making under uncertainty using progressively collected data.
+The underlying mathematical functions remain unknown throughout the exercise. Each optimisation decision is therefore based on the query history, returned objective values and observed behaviour of each function.
 
 ---
 
@@ -56,36 +56,28 @@ The optimisation demonstrates how sequential decision-making can progressively i
 
 ## Repository Structure
 
-```
+```text
 Imperial-MLAI-BBO-Capstone/
-
-README.md
-
-docs/
-├── DATASHEET.md
-├── MODEL_CARD.md
-├── METHODOLOGY.md
-└── OPTIMISATION_HISTORY.md
-
-data/
-├── queries.csv
-└── results.csv
-```
-
----
-
+├── README.md
+├── docs/
+│   ├── DATASHEET.md
+│   ├── MODEL_CARD.md
+│   ├── METHODOLOGY.md
+│   └── OPTIMISATION_HISTORY.md
+└── data/
+    ├── queries.csv
+    └── results.csv
 ## Documentation
-
-This repository follows recognised machine learning documentation practices.
 
 | Document | Description |
 |----------|-------------|
-| DATASHEET.md | Documentation describing the optimisation dataset |
-| MODEL_CARD.md | Documentation describing the optimisation strategy |
-| METHODOLOGY.md | Detailed optimisation methodology |
-| OPTIMISATION_HISTORY.md | Summary of optimisation decisions across ten rounds |
-
+| [Datasheet](docs/DATASHEET.md) | Describes the composition, collection, intended use and limitations of the optimisation dataset |
+| [Model Card](docs/MODEL_CARD.md) | Documents the Adaptive Sequential Optimisation Strategy, its intended use, performance, assumptions and limitations |
+| [Methodology](docs/METHODOLOGY.md) | Explains the sequential optimisation workflow and how the strategy evolved |
+| [Optimisation History](docs/OPTIMISATION_HISTORY.md) | Summarises the observations and optimisation behaviour identified across the project |
 ---
+> **Project status:** This repository is being updated as additional optimisation rounds are completed through the remaining capstone modules.
+
 
 ## Technologies
 
@@ -122,13 +114,6 @@ Potential future enhancements include:
 
 ---
 
-## About Me
-
-I am a Technology Delivery and SAP Transformation Leader with nearly two decades of experience delivering enterprise transformation programmes across utilities, manufacturing and cloud platforms.
-
-Alongside my enterprise technology background, I am developing practical expertise in Machine Learning and Artificial Intelligence through the Imperial College London Professional Certificate programme, with a particular interest in applying AI to enterprise transformation, decision support and intelligent automation.
-
----
 
 ## Acknowledgements
 
