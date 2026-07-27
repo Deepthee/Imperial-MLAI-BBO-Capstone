@@ -155,29 +155,34 @@ This dataset should not be used for:
 
 ---
 
+---
+
 # 6. Distribution
 
-This dataset forms part of the Imperial College Black-Box Optimisation Capstone Project.
+This dataset forms part of the Imperial College London Black-Box Optimisation (BBO) Capstone Project.
 
-The optimisation history contained within this repository documents the observations generated during the project.
+The repository contains the optimisation history generated during the project together with the accompanying documentation.
 
-The underlying evaluation platform and objective functions are not distributed with this repository.
+The underlying evaluation platform and objective functions are not included in this repository.
+
+The query-selection process is documented in the accompanying [Model Card](MODEL_CARD.md) and [Methodology](METHODOLOGY.md).
 
 ---
 
 # 7. Maintenance
 
-Maintainer:
+This repository is maintained by **Deepthee Kasal**.
 
-**Deepthee Kasal**
+The dataset is updated after each optimisation round completed during the capstone project. New query points, returned objective values and supporting documentation are added as the optimisation progresses.
 
-Updates were made after each optimisation round.
+Following completion of the capstone, the repository will serve as a permanent record of the optimisation process.
 
-The dataset is now considered complete following submission of the tenth optimisation round.
+Related documentation:
 
-Future updates are not anticipated.
+- [Model Card](MODEL_CARD.md)
+- [Methodology](METHODOLOGY.md)
+- [Optimisation History](OPTIMISATION_HISTORY.md)
 
----
 
 # 8. Limitations
 
