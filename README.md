@@ -4,7 +4,7 @@
 
 This repository contains my capstone project for the **Imperial College London Professional Certificate in Machine Learning and Artificial Intelligence**.
 
-The project focuses on solving a sequential **Black-Box Optimisation (BBO)** problem involving eight unknown objective functions. Across ten optimisation rounds, I developed and refined a Bayesian Optimisation-inspired search strategy that balanced exploration of uncertain regions with exploitation of promising solutions using only the historical observations returned after each query.
+The project focuses on solving a sequential **Black-Box Optimisation (BBO)** problem involving eight unknown objective functions. Across ten optimisation rounds, I developed and refined an Adaptive Sequential Optimisation Strategy (ASOS), inspired by Bayesian Optimisation principles, to balance exploration and exploitation across sequential optimisation rounds.
 
 Unlike traditional machine learning projects, the underlying objective functions remain unknown throughout the exercise. The optimisation process therefore required informed decision-making under uncertainty using progressively collected data.
 
@@ -82,8 +82,8 @@ This repository follows recognised machine learning documentation practices.
 |----------|-------------|
 | DATASHEET.md | Documentation describing the optimisation dataset |
 | MODEL_CARD.md | Documentation describing the optimisation strategy |
-| METHODOLOGY.md | Sequential optimisation methodology and reasoning |
-| OPTIMISATION_HISTORY.md | Summary of all optimisation rounds and decisions |
+| METHODOLOGY.md | Detailed optimisation methodology |
+| OPTIMISATION_HISTORY.md | Summary of optimisation decisions across ten rounds |
 
 ---
 
