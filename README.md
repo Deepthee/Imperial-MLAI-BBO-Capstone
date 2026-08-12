@@ -1,295 +1,435 @@
 # Black-Box Optimisation Capstone Project
 
-## Imperial College London – Professional Certificate in Machine Learning and Artificial Intelligence
+## Imperial College London Professional Certificate in Machine Learning and Artificial Intelligence
 
-This repository documents my work on the **Black-Box Optimisation (BBO) Capstone Project**, completed as part of the Professional Certificate in Machine Learning and Artificial Intelligence.
+This repository documents my Black-Box Optimisation (BBO) capstone project completed as part of the Imperial College London Professional Certificate in Machine Learning and Artificial Intelligence.
 
-The project involved optimising **eight unknown objective functions** with different dimensionalities. The underlying mathematical form of each function was hidden, and only the output generated from each submitted query was available.
+The project involved sequentially optimising eight unknown objective functions using a limited number of evaluations. Across Stage 2 of the capstone, I completed 13 optimisation rounds, progressively refining my approach as new observations became available.
 
-The challenge therefore required decisions to be made under uncertainty and with a very limited evaluation budget.
-
----
-
-
-## Project Objective
-
-The objective was to identify input combinations that maximise each of the eight unknown functions.
-
-For a function
-
-[
-f(x_1,x_2,\ldots,x_n)
-]
-
-the goal was to find an input vector
-
-[
-x^*=\arg\max_x f(x)
-]
-
-without knowing the analytical form of (f).
-
-Each submitted query returned only the corresponding function value. This created a sequential optimisation problem in which every observation had to be used to decide where to search next.
-
-The eight functions ranged from **2 to 8 dimensions**, making the optimisation challenge progressively harder as dimensionality increased.
+The project explores Bayesian optimisation, Gaussian Process surrogate modelling, acquisition functions, exploration versus exploitation, hyperparameter tuning, clustering, PCA-inspired reasoning and reinforcement-learning concepts.
 
 ---
 
 ## Non-Technical Summary
 
-This project explores how good decisions can be made when very little information is available. I was given eight hidden functions and had to find input values that produced the highest possible outputs. Each round revealed only the result of the submitted inputs, so the next decision had to be based on patterns learned from previous attempts. My strategy gradually moved from broad exploration towards more focused searches around promising regions. The project demonstrates how machine learning techniques such as Bayesian optimisation can support decision-making when experiments are limited, outcomes are uncertain and trying every possible option is impractical.
+The goal of this project was to find strong solutions to eight unknown mathematical functions without being able to see how the functions worked internally. Each time I selected a set of input values, the system returned a result, and that new information was used to decide what to try next. Rather than relying on random trial and error, I used machine-learning techniques to estimate which areas were promising while also considering unexplored regions. Over successive rounds, the strategy became increasingly focused on the strongest areas identified by the data. The project demonstrates how intelligent decisions can be made when information is limited and experimentation is costly.
+
+---
+
+## Project Objective
+
+The capstone was structured as a black-box optimisation problem.
+
+For each of eight unknown functions, I was provided with an initial set of input-output observations. The internal mathematical form of the functions was hidden.
+
+The task was to select new query points that would maximise the returned objective value.
+
+This created three key challenges:
+
+- only a small number of observations were available;
+- the search spaces ranged from two to eight dimensions;
+- every query had an opportunity cost because the number of evaluations was limited.
+
+The problem therefore required a balance between:
+
+**Exploration:** testing uncertain or previously unexplored regions.
+
+**Exploitation:** refining regions that had already produced strong results.
+
+---
+
+## Objective Functions
+
+The challenge contained eight functions of increasing dimensionality:
+
+| Function | Input dimensions |
+| --- | ---: |
+| Function 1 | 2 |
+| Function 2 | 2 |
+| Function 3 | 3 |
+| Function 4 | 4 |
+| Function 5 | 4 |
+| Function 6 | 5 |
+| Function 7 | 6 |
+| Function 8 | 8 |
+
+The increasing dimensionality made the later functions progressively harder to understand and visualise.
 
 ---
 
 ## Optimisation Approach
 
-My strategy evolved throughout the capstone rather than relying on a single fixed model.
+My primary approach was based on **Bayesian optimisation using Gaussian Process (GP) surrogate modelling**.
 
-The overall process followed the cycle:
+The overall process was:
 
-**Observe → Model → Evaluate uncertainty → Select query → Receive feedback → Update**
+1. Analyse the observations collected so far.
+2. Fit or update a Gaussian Process surrogate.
+3. Estimate the predicted performance and uncertainty of unseen candidates.
+4. Generate candidate points across the search space.
+5. Apply an acquisition strategy such as Expected Improvement or Upper Confidence Bound.
+6. Compare the model recommendation with historical observations.
+7. Select and submit the next query.
+8. Receive the black-box evaluation.
+9. Add the result to the dataset.
+10. Repeat the process.
 
-Early rounds placed greater emphasis on **exploration**, allowing different areas of the search space to be sampled.
+A **Matérn-family kernel** was used as the main GP kernel because it provides flexibility when modelling functions that may not be perfectly smooth.
 
-As more observations became available, the strategy increasingly favoured **exploitation**, refining regions associated with stronger outputs while retaining some exploration where uncertainty remained high.
+Sobol sampling was also used to generate structured candidate points across multidimensional search spaces.
 
-The main techniques considered or used during the project included:
-
-* exploratory data analysis and visualisation;
-* Gaussian Process surrogate modelling;
-* Bayesian optimisation;
-* Expected Improvement (EI);
-* Upper Confidence Bound (UCB);
-* Sobol sampling for candidate generation;
-* kernel-based modelling;
-* simple regression baselines;
-* SVM-based reasoning during exploratory stages;
-* neural-network experimentation for selected functions;
-* clustering-inspired interpretation of promising regions;
-* PCA-inspired reasoning about influential dimensions and redundant exploration;
-* reinforcement-learning concepts for interpreting exploration and exploitation.
-
-The final strategy remained deliberately pragmatic. More complex models were introduced only when the available data justified them.
+For a detailed technical explanation, see [`METHODOLOGY.md`](METHODOLOGY.md).
 
 ---
 
-## Evolution of the Strategy
+## How the Strategy Evolved
+
+The optimisation strategy changed considerably as additional observations became available.
 
 ### Early rounds: exploration
 
-The initial observations were sparse, so confidently identifying promising regions was difficult.
+Initially, relatively little was known about the objective functions.
 
-The emphasis was therefore on:
+The priority was therefore to learn about the search space and avoid becoming committed too early to a potentially suboptimal region.
 
-* understanding the scale and behaviour of each function;
-* maintaining broad coverage of the search space;
-* visualising lower-dimensional functions where possible;
-* avoiding premature commitment to apparent local optima.
+### Middle rounds: model-guided refinement
 
-### Middle rounds: model-based refinement
+As the dataset grew, Gaussian Process predictions and uncertainty became more informative.
 
-As additional observations became available, Gaussian Process models became increasingly useful because they could represent both:
+The strategy increasingly combined:
 
-* predicted function values; and
-* uncertainty around those predictions.
+- GP predictions;
+- acquisition-function scores;
+- uncertainty;
+- previous high-performing observations; and
+- local behaviour around promising regions.
 
-Acquisition functions were then used to balance exploration and exploitation.
+Concepts introduced throughout the programme also influenced how I interpreted the search, including hyperparameter tuning, clustering and dimensionality reduction.
 
-Expected Improvement was useful for identifying locations with potential to improve the current best observation, while UCB provided another mechanism for balancing predicted performance against uncertainty.
+### Final rounds: selective exploitation
 
-### Later rounds: targeted exploitation
+As the number of remaining evaluations decreased, broad exploration became less valuable because there were fewer future rounds in which to exploit newly discovered information.
 
-During the later stages, the limited number of remaining evaluations changed the risk/reward balance.
+The final strategy therefore placed greater emphasis on promising regions while retaining limited exploration where uncertainty remained useful.
 
-Instead of attempting to map large unexplored areas, I increasingly refined promising regions identified by earlier observations.
-
-Ideas from clustering and PCA also influenced this stage. Repeated strong observations could be viewed as local clusters, while dimensions or movements producing little additional information could receive less attention.
-
-### Final round
-
-The final submission placed greater emphasis on exploiting evidence accumulated over the previous rounds.
-
-Where recent movement had reduced performance, I was willing to move back towards previously stronger regions rather than continue searching in the same direction.
-
-This was particularly useful for Functions 2 and 7, while Function 5 continued to benefit from local refinement.
+Historical evidence also became increasingly important. A recent observation was not automatically considered more useful than an earlier strong result.
 
 ---
 
-## Final Round Results
+## Exploration and Exploitation
 
-| Function   |    Final Output |
-| ---------- | --------------: |
-| Function 1 |    1.812495e-08 |
-| Function 2 |        0.543109 |
-| Function 3 |       -0.023874 |
-| Function 4 |       -3.055181 |
-| Function 5 | **1368.742373** |
-| Function 6 |       -0.563543 |
-| Function 7 |    **1.346625** |
-| Function 8 |    **9.570335** |
+The exploration-exploitation trade-off became one of the most important lessons from the project.
 
-Function 5 showed particularly strong improvement during the later optimisation rounds and reached **1368.742373** in the final round.
+Early exploration was valuable because information discovered at that stage could influence many future queries.
 
-Function 7 also demonstrated why retaining historical information matters. After performance declined during several later queries, returning towards an earlier promising region produced a final value of **1.346625**.
+Later in the project, the value of exploitation increased because the remaining query budget was limited.
 
-Function 8 showed comparatively small changes during the later rounds, suggesting that the search had entered a relatively stable region.
+This is closely related to ideas from reinforcement learning and multi-armed bandits: actions produce feedback, feedback changes expectations and those updated expectations influence future actions.
+
+The optimisation process therefore became increasingly adaptive rather than following one fixed policy throughout the challenge.
 
 ---
 
-## Key Lessons
+## Other ML Concepts Considered
 
-### Exploration and exploitation must change over time
+Although Gaussian Process Bayesian optimisation remained the main foundation, other machine-learning concepts influenced the project.
 
-The appropriate balance was not constant.
+### Linear Regression
 
-Early in the project, exploration was valuable because little was known about the functions. Later, with fewer evaluations remaining, exploiting established high-performing regions became increasingly important.
+Linear regression was considered as a simple baseline for identifying possible directional relationships between inputs and outputs.
 
-### Uncertainty is useful information
+### Support Vector Machines
 
-A prediction alone does not indicate how trustworthy it is.
+SVM concepts influenced my thinking around boundaries between stronger and weaker regions of the search space.
 
-Gaussian Processes were particularly useful because uncertainty could be incorporated directly into query selection.
+### Neural Networks
 
-### More complex models are not automatically better
+Neural networks were considered as flexible nonlinear surrogate models. However, the extremely small datasets created a significant risk of overfitting, so they did not replace Gaussian Processes as the primary model.
 
-With very small data sets, highly flexible models can introduce additional tuning requirements without necessarily improving optimisation.
+### Hyperparameter Tuning
 
-This reinforced the value of starting with interpretable approaches and increasing complexity only when justified.
+Kernel parameters and acquisition-function settings were examined to understand their effect on the exploration-exploitation balance.
 
-### Dimensionality changes the problem
+### Clustering
 
-Two-dimensional functions could be inspected visually, making patterns easier to recognise.
+As more observations accumulated, I considered whether successful queries formed local clusters or recurring promising regions.
 
-For higher-dimensional functions, intuition became less reliable and model-based search became substantially more important.
+### PCA
 
-### Historical results should not be ignored
+PCA introduced a useful way of thinking about higher-dimensional functions: focus attention on the directions that appear to contain meaningful variation while avoiding redundant exploration.
 
-Later rounds demonstrated that continuing to move in one direction simply because it was the most recent strategy can be counterproductive.
+### Reinforcement Learning
 
-Previous high-performing regions remained valuable evidence and occasionally justified returning to an earlier part of the search space.
+The final rounds highlighted similarities between sequential BBO and reinforcement learning, particularly feedback-driven adaptation and exploration versus exploitation.
+
+---
+
+## Stage 2 Optimisation History
+
+Stage 2 consisted of **13 sequential query rounds from Modules 12 to 24**.
+
+Each round produced one new evaluation for each of the eight objective functions.
+
+The complete recorded history is available in:
+
+- [`data/queries.csv`](data/queries.csv)
+- [`data/results.csv`](data/results.csv)
+
+A narrative explanation of how the strategy evolved is available in:
+
+[`OPTIMISATION_HISTORY.md`](OPTIMISATION_HISTORY.md)
+
+---
+
+## Final-Round Observations
+
+The final round reinforced the fact that different functions required different optimisation behaviours.
+
+### Function 5
+
+Function 5 responded particularly well to continued local refinement and produced a final-round value of approximately **1368.74**.
+
+This was one of the clearest examples of successful exploitation.
+
+### Function 2
+
+Function 2 demonstrated sensitivity to relatively small changes in its inputs. Returning towards a previously successful neighbourhood produced a substantial recovery in the final round.
+
+### Function 7
+
+Function 7 showed the value of retaining historical evidence. After several weaker results, moving back towards an earlier promising region improved the final result to approximately **1.35**.
+
+### Function 8
+
+Function 8 converged towards approximately **9.5703**, with increasingly small improvements suggesting diminishing returns in the region being explored.
+
+These results reinforced the importance of using **function-specific strategies rather than applying exactly the same optimisation policy to every objective**.
 
 ---
 
 ## Repository Structure
 
 ```text
-BBO-Capstone-Project/
-│
+.
 ├── README.md
 ├── DATASHEET.md
 ├── MODEL_CARD.md
 ├── METHODOLOGY.md
 ├── OPTIMISATION_HISTORY.md
-├── requirements.txt
+├── BBO_Optimisation.ipynb
 │
-├── data/
-│   ├── inputs.csv
-│   └── outputs.csv
-│
-├── notebooks/
-│   └── BBO_Optimisation.ipynb
-│
-└── presentation/
-    └── BBO_Capstone_Presentation.pdf
+└── data/
+    ├── README.md
+    ├── queries.csv
+    ├── results.csv
+    │
+    └── initial/
+        ├── README.md
+        ├── function1_initial_inputs.npy
+        ├── function1_initial_outputs.npy
+        ├── ...
+        ├── function8_initial_inputs.npy
+        └── function8_initial_outputs.npy
 ```
-
-Additional weekly notebooks may be included where the historical analysis can be reconstructed reliably from the recorded query history.
 
 ---
 
-## Documentation
+## Jupyter Notebook
 
-### Datasheet
+The main reproducible analysis is available here:
+
+[`BBO_Optimisation.ipynb`](BBO_Optimisation.ipynb)
+
+The notebook demonstrates:
+
+- loading the initial BBO datasets;
+- loading all Stage 2 query results;
+- constructing the complete optimisation history;
+- Gaussian Process surrogate modelling;
+- Matérn kernels;
+- Expected Improvement;
+- Upper Confidence Bound;
+- Sobol candidate generation;
+- retrospective query recommendation;
+- two-dimensional surrogate visualisation;
+- analysis of optimisation progress; and
+- final observations and limitations.
+
+The notebook distinguishes between the **actual recorded submissions** and a **representative reproducible implementation** of the modelling methodology.
+
+---
+
+## Data Documentation
+
+The project data is documented in:
 
 [`DATASHEET.md`](DATASHEET.md)
 
-Documents the origin, composition, collection process, preprocessing, intended use and limitations of the BBO data set.
+The datasheet describes:
 
-### Model Card
+- motivation;
+- composition;
+- collection process;
+- preprocessing;
+- intended uses;
+- inappropriate uses;
+- distribution;
+- limitations; and
+- maintenance.
+
+The original challenge datasets have also been retained in NumPy `.npy` format under `data/initial/`.
+
+---
+
+## Model Documentation
+
+The optimisation approach is documented in:
 
 [`MODEL_CARD.md`](MODEL_CARD.md)
 
-Documents the optimisation approach, intended use, modelling decisions, assumptions, limitations and performance.
+The model card describes:
 
-### Methodology
+- the optimisation approach;
+- intended use;
+- modelling strategy;
+- performance;
+- assumptions;
+- limitations;
+- potential failure modes; and
+- transparency considerations.
+
+---
+
+## Technical Methodology
+
+A detailed explanation of the modelling and decision-making process is provided in:
 
 [`METHODOLOGY.md`](METHODOLOGY.md)
 
-Provides a more detailed technical explanation of the modelling and optimisation strategy.
+This includes the reasoning behind:
 
-### Optimisation History
-
-[`OPTIMISATION_HISTORY.md`](OPTIMISATION_HISTORY.md)
-
-Records how the optimisation strategy and results evolved across the query rounds.
-
-### Reproducible Analysis
-
-[`notebooks/BBO_Optimisation.ipynb`](notebooks/BBO_Optimisation.ipynb)
-
-Provides a reproducible implementation of the core analysis and optimisation workflow using the recorded BBO observations.
-
----
-
-## Technologies
-
-The project uses the Python scientific and machine-learning ecosystem, including:
-
-* Python
-* NumPy
-* Pandas
-* Matplotlib
-* SciPy
-* scikit-learn
-* Jupyter Notebook
-
-Gaussian Process modelling is primarily implemented using `GaussianProcessRegressor` from scikit-learn.
+- Gaussian Processes;
+- Matérn kernels;
+- Expected Improvement;
+- Upper Confidence Bound;
+- Sobol sampling;
+- hyperparameter tuning;
+- exploration and exploitation;
+- clustering-inspired analysis;
+- PCA-inspired reasoning; and
+- reinforcement-learning interpretations.
 
 ---
 
-## Reproducibility
+## Running the Notebook
 
-The repository records the query and output history used during the optimisation challenge.
+The project requires Python 3 and the following libraries:
 
-The analysis notebook demonstrates how the recorded observations can be loaded, analysed and used to construct surrogate models and evaluate candidate query points.
+```text
+numpy
+pandas
+scipy
+scikit-learn
+matplotlib
+jupyter
+```
 
-Because this was a sequential black-box challenge, the original hidden objective functions are not available in this repository. The supplied data therefore represents observations returned by the capstone platform rather than functions that can be evaluated locally.
+Install the dependencies using:
+
+```bash
+pip install numpy pandas scipy scikit-learn matplotlib jupyter
+```
+
+Clone the repository and start Jupyter:
+
+```bash
+jupyter notebook
+```
+
+Open:
+
+```text
+BBO_Optimisation.ipynb
+```
+
+The hidden objective functions themselves cannot be executed locally because they were evaluated externally through the capstone project portal.
 
 ---
 
-## Assumptions and Limitations
+## Limitations
 
-The optimisation approach assumes that the objective functions contain enough underlying structure for observations in nearby or related regions to provide useful information.
+Several limitations should be considered when interpreting the project.
 
-Important limitations include:
+### Small datasets
 
-* a very small number of observations;
-* increasingly sparse coverage as dimensionality grows;
-* uncertainty about the true objective-function structure;
-* sensitivity of surrogate models to kernel and hyperparameter choices;
-* risk of premature exploitation;
-* limited ability to validate models using conventional train/test procedures;
-* inability to guarantee that the global optimum has been identified.
+Only a limited number of observations were available for each function.
 
-The results should therefore be interpreted as outcomes of a **limited-budget sequential optimisation process**, rather than proof that the true global maxima were found.
+### High dimensionality
+
+For higher-dimensional functions, the available observations represented only a very small fraction of the possible search space.
+
+### Surrogate assumptions
+
+Gaussian Process modelling assumes that sufficient structure exists for previous observations to provide information about other regions.
+
+### Sequential sampling bias
+
+Later observations became concentrated around areas believed to be promising. The resulting dataset is therefore not a uniformly sampled representation of the complete search space.
+
+### Hyperparameter sensitivity
+
+Different kernels, noise assumptions and acquisition settings can lead to different recommendations.
+
+### Unknown global optimum
+
+Because the objective functions were hidden, the strongest observed result cannot be assumed to be the true global maximum.
 
 ---
 
-## Broader ML Relevance
+## Key Learning
 
-The BBO challenge reflects a common real-world problem: making decisions when experimentation is expensive and complete information is unavailable.
+The most important lesson from the project was that successful optimisation is not simply about selecting the most sophisticated model.
 
-Similar principles appear in:
+The quality of the process depends on making good sequential decisions under uncertainty.
 
-* hyperparameter optimisation;
-* engineering design;
-* scientific experimentation;
-* operational optimisation;
-* resource allocation;
-* A/B testing;
-* automated machine-learning systems.
+The project demonstrated the importance of:
 
-The project reinforced that successful optimisation is not simply about selecting the most sophisticated algorithm. It requires balancing uncertainty, available evidence, computational effort and the cost of making an unsuccessful decision.
+- using uncertainty rather than ignoring it;
+- adapting exploration as the evaluation budget changes;
+- preserving historical evidence;
+- recognising when additional complexity is unsupported by the data;
+- learning from unsuccessful evaluations;
+- avoiding premature convergence; and
+- adapting the strategy to the behaviour of individual functions.
+
+These principles extend beyond black-box optimisation to model tuning, experimentation, engineering design and real-world ML decision-making.
+
+---
+
+## Transparency and Reproducibility
+
+The repository separates:
+
+- raw initial data;
+- submitted queries;
+- returned evaluations;
+- executable analysis;
+- methodology;
+- optimisation history;
+- dataset documentation; and
+- model documentation.
+
+The goal is to make it possible for another reader to understand not only **what was submitted**, but also **why the optimisation strategy evolved as it did**.
+
+The hidden functions themselves are not available, so the external objective evaluations cannot be independently reproduced.
+
+---
+
+## Academic Context
+
+This repository was created as part of the **Imperial College London Professional Certificate in Machine Learning and Artificial Intelligence**.
+
+It documents an educational black-box optimisation challenge and should not be interpreted as a production optimisation system.
 
 ---
 
@@ -297,4 +437,4 @@ The project reinforced that successful optimisation is not simply about selectin
 
 **Capstone optimisation completed.**
 
-All query rounds have been completed and the repository represents the final documented version of the project.
+Stage 2 covered 13 sequential optimisation rounds across Modules 12–24, followed by final retrospective analysis and repository consolidation.
