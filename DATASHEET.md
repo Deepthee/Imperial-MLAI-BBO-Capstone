@@ -4,9 +4,11 @@
 
 This dataset was created as part of the **Imperial College London Professional Certificate in Machine Learning and Artificial Intelligence** Black-Box Optimisation (BBO) Capstone Project.
 
-The dataset records the sequential optimisation history for eight unknown objective functions over ten optimisation rounds. Each round consists of one new query submitted for each function together with the corresponding objective value returned by the evaluation system.
+The dataset records the sequential optimisation history for eight unknown objective functions. Stage 2 of the project consisted of **13 optimisation rounds from Modules 12 to 24**, with one new query submitted for each function during every round.
 
-Unlike conventional machine learning datasets, this dataset was generated incrementally throughout the optimisation process, with each new observation influencing subsequent optimisation decisions.
+Each submitted query produced an objective value from the external BBO evaluation system. That result was then incorporated into the available evidence and used to inform subsequent optimisation decisions.
+
+Unlike a conventional static machine-learning dataset, this dataset was generated **sequentially and adaptively**. Later observations therefore depend partly on the results obtained in earlier rounds.
 
 ---
 
@@ -16,21 +18,28 @@ Unlike conventional machine learning datasets, this dataset was generated increm
 
 The dataset was created to support the Black-Box Optimisation Capstone Project.
 
-Its primary purpose is to document the optimisation process and enable analysis of how optimisation strategies evolve as additional observations become available.
+Its primary purpose is to document the optimisation process and enable analysis of how query-selection strategies evolve as additional observations become available.
 
-The dataset supports learning in:
+The dataset supports learning and experimentation in:
 
 - Sequential optimisation
-- Bayesian Optimisation concepts
+- Bayesian optimisation
+- Gaussian Process surrogate modelling
 - Exploration versus exploitation
 - Optimisation under uncertainty
-- Reproducible decision making
+- Acquisition-function reasoning
+- Data-driven decision-making
+- Reproducible optimisation workflows
+
+The dataset also provides a record of both successful and unsuccessful query decisions, allowing the evolution of the optimisation strategy to be examined retrospectively.
 
 ---
 
 ## Who created the dataset?
 
-The dataset was created by **Deepthee Kasal** during completion of the Imperial College London Professional Certificate in Machine Learning and Artificial Intelligence.
+The Stage 2 optimisation history was generated and documented by **Deepthee Kasal** during completion of the Imperial College London Professional Certificate in Machine Learning and Artificial Intelligence.
+
+The initial observations and subsequent objective-function evaluations were supplied by the capstone platform.
 
 ---
 
@@ -38,19 +47,21 @@ The dataset was created by **Deepthee Kasal** during completion of the Imperial 
 
 ## What does the dataset contain?
 
-The dataset contains optimisation records for eight independent objective functions.
+The repository contains data for eight independent black-box objective functions.
 
-Each observation consists of:
+Each Stage 2 observation records:
 
-- Function identifier
-- Query point
-- Objective value
 - Optimisation round
+- Module
+- Function identifier
+- Query coordinates
+- Number of input dimensions
+- Objective value returned by the evaluator
 
-Each function has a different dimensionality.
+The functions have different dimensionalities:
 
 | Function | Dimensions |
-|----------|-----------:|
+| --- | ---: |
 | F1 | 2 |
 | F2 | 2 |
 | F3 | 3 |
@@ -60,138 +71,306 @@ Each function has a different dimensionality.
 | F7 | 6 |
 | F8 | 8 |
 
----
-
-## Dataset size
-
-The dataset contains:
-
-- Initial observations supplied by the capstone platform
-- Ten sequential optimisation rounds
-- Eight optimisation functions
-- Approximately twenty observations for each function
-
-All variables are numerical.
+All query coordinates and objective values are numerical.
 
 ---
 
-## Missing information
+## Dataset Size
 
-The mathematical form of the objective functions is intentionally unknown.
+Stage 2 contains:
 
-Large regions of the search space remain unexplored, particularly for the higher-dimensional functions.
+- **13 sequential optimisation rounds**
+- **8 objective functions**
+- **1 submitted query per function per round**
+- **104 Stage 2 query evaluations**
 
-No metadata describing the underlying functions is available.
+In addition to these Stage 2 observations, the repository contains the original initial input and output datasets supplied at the beginning of the BBO challenge.
+
+The initial datasets are stored separately in:
+
+`data/initial/`
+
+The Stage 2 history is stored in:
+
+- `data/queries.csv`
+- `data/results.csv`
+
+---
+
+## Data Format
+
+### `queries.csv`
+
+Contains the submitted Stage 2 query points.
+
+Fields include:
+
+- `round`
+- `module`
+- `function`
+- `dimensions`
+- `query`
+- `x1` to `x8`
+
+Unused coordinate columns are blank for lower-dimensional functions.
+
+### `results.csv`
+
+Contains the objective values returned by the BBO evaluation system.
+
+Fields include:
+
+- `round`
+- `module`
+- `function`
+- `output`
+
+### Initial datasets
+
+The initial observations are retained in their original NumPy `.npy` format.
+
+For each function there is an input and output file, for example:
+
+```text
+function1_initial_inputs.npy
+function1_initial_outputs.npy
+...
+function8_initial_inputs.npy
+function8_initial_outputs.npy
+```
+
+---
+
+## Missing Information
+
+The mathematical forms of the eight objective functions are intentionally unknown.
+
+The repository therefore does not contain:
+
+- source code for the hidden functions;
+- analytical expressions for the functions;
+- known global optima;
+- complete representations of the search spaces; or
+- exhaustive evaluations of candidate points.
+
+Large areas of the search spaces remain unexplored, particularly for the higher-dimensional functions.
 
 ---
 
 # 3. Collection Process
 
-## How was the data collected?
+## Initial Data
 
-The initial observations were provided by the capstone platform.
+The initial observations were supplied by the capstone platform.
 
-Subsequent observations were generated by submitting one new query for each function during every optimisation round.
-
-Each query was selected after analysing all previously observed objective values.
-
-The optimisation decisions documented in this dataset were generated using the Adaptive Sequential Optimisation Strategy (ASOS) described in the accompanying Model Card.
-
-Selection decisions were informed by:
-
-- Previous objective values
-- Historical query locations
-- Local search behaviour
-- Evidence of convergence
-- Remaining uncertainty
-
-The dataset therefore represents a chronological optimisation history rather than an independently sampled dataset.
+These provided the starting evidence from which optimisation decisions could be made.
 
 ---
 
-## Timeframe
+## Stage 2 Data Collection
 
-The dataset was collected over ten consecutive optimisation rounds during completion of the capstone project.
+Stage 2 consisted of 13 sequential query rounds from **Module 12 through Module 24**.
 
----
+During each round:
 
-# 4. Pre-processing
+1. Existing observations were reviewed.
+2. The behaviour of each function was analysed.
+3. Surrogate-model predictions and/or optimisation trends were considered.
+4. One new query point was selected for each function.
+5. The eight queries were submitted to the external capstone portal.
+6. The portal returned one objective value for each query.
+7. The new observations were incorporated into the optimisation history.
+8. The expanded dataset informed the following round.
 
-No preprocessing was applied.
+This means the observations are **not independent random samples**.
 
-Specifically:
-
-- No feature engineering
-- No scaling
-- No normalisation
-- No dimensionality reduction
-- No missing-value imputation
-
-The optimisation decisions were based directly on the raw observations returned by the evaluation platform.
-
----
-
-# 5. Intended Uses
-
-This dataset is intended for:
-
-- Educational demonstrations of black-box optimisation
-- Sequential optimisation research
-- Bayesian Optimisation-inspired workflows
-- Teaching optimisation under limited information
-- Reproducible optimisation case studies
+They reflect an adaptive optimisation policy in which previous outcomes influenced subsequent query locations.
 
 ---
 
-## Not intended for
+## Query-Selection Strategy
 
-This dataset should not be used for:
+The query-selection process evolved throughout the project.
 
-- Benchmarking supervised learning algorithms
-- Regression model evaluation
-- Classification tasks
-- Statistical estimation of the unknown objective functions
-- General-purpose machine learning datasets
+The primary framework was based on Bayesian optimisation principles and included:
 
----
+- Gaussian Process surrogate modelling;
+- Matérn-family kernels;
+- Expected Improvement;
+- Upper Confidence Bound reasoning;
+- Sobol candidate generation;
+- predictive uncertainty;
+- historical objective values;
+- local improvement patterns; and
+- exploration-exploitation trade-offs.
 
----
+Later rounds increasingly incorporated function-specific judgement and concepts from hyperparameter tuning, clustering, PCA and reinforcement learning.
 
-# 6. Distribution
-
-This dataset forms part of the Imperial College London Black-Box Optimisation (BBO) Capstone Project.
-
-The repository contains the optimisation history generated during the project together with the accompanying documentation.
-
-The underlying evaluation platform and objective functions are not included in this repository.
-
-The query-selection process is documented in the accompanying [Model Card](MODEL_CARD.md) and [Methodology](METHODOLOGY.md).
-
----
-
-# 7. Maintenance
-
-This repository is maintained by **Deepthee Kasal**.
-
-The dataset is updated after each optimisation round completed during the capstone project. New query points, returned objective values and supporting documentation are added as the optimisation progresses.
-
-Following completion of the capstone, the repository will serve as a permanent record of the optimisation process.
-
-Related documentation:
+The final approach is described in:
 
 - [Model Card](MODEL_CARD.md)
 - [Methodology](METHODOLOGY.md)
 - [Optimisation History](OPTIMISATION_HISTORY.md)
 
+---
 
-# 8. Limitations
+# 4. Preprocessing and Transformations
+
+The original objective observations were preserved without altering their returned values.
+
+No target-value imputation or synthetic objective evaluations were introduced.
+
+For repository analysis, the observations were reorganised into structured tabular form so that the Stage 2 history could be analysed consistently across all eight functions.
+
+Because the functions have different dimensionalities, the query table provides coordinate columns from `x1` to `x8`. Coordinates that do not apply to a lower-dimensional function are left blank.
+
+The original initial datasets are retained separately in `.npy` format to preserve the source data used during the challenge.
+
+---
+
+# 5. Intended Uses
+
+The dataset is intended for:
+
+- Educational demonstrations of black-box optimisation
+- Sequential optimisation analysis
+- Bayesian optimisation experiments
+- Gaussian Process surrogate modelling
+- Exploration-exploitation studies
+- Analysis of optimisation under limited information
+- Reproducible optimisation case studies
+- Examination of adaptive query-selection behaviour
+
+It may also be useful for comparing alternative surrogate or acquisition strategies retrospectively.
+
+---
+
+## Inappropriate Uses
+
+The dataset should not be treated as:
+
+- a representative real-world population dataset;
+- a conventional supervised-learning benchmark;
+- evidence that the global optima of the functions were found;
+- a comprehensive map of the hidden functions;
+- an unbiased random sample of the search spaces; or
+- a validated production optimisation benchmark.
+
+The observations were collected specifically for sequential optimisation and are therefore affected by the query-selection strategy.
+
+---
+
+# 6. Distribution and Access
+
+The dataset forms part of the public GitHub repository for the BBO Capstone Project.
+
+The repository contains:
+
+- the original initial datasets;
+- Stage 2 query history;
+- Stage 2 objective results;
+- Jupyter Notebook analysis;
+- methodology documentation;
+- optimisation history;
+- model card; and
+- this datasheet.
+
+The hidden objective functions and external capstone evaluation platform are not included.
+
+Consequently, historical analysis can be reproduced from the stored observations, but the original black-box evaluations cannot be independently rerun from this repository.
+
+---
+
+# 7. Maintenance
+
+The dataset was updated during the active optimisation phase as new query results became available.
+
+The optimisation phase is now **complete**.
+
+The repository therefore serves as the final record of the BBO capstone rather than an actively growing optimisation dataset.
+
+Future changes, if any, would be limited to:
+
+- documentation corrections;
+- reproducibility improvements;
+- additional retrospective analysis; or
+- clearer presentation of the existing results.
+
+No further official BBO query rounds are expected to be added.
+
+---
+
+# 8. Biases and Sampling Considerations
+
+The dataset contains an important form of **sequential sampling bias**.
+
+Later query points were deliberately influenced by earlier results. As promising regions emerged, more evaluations were concentrated around those regions.
+
+Consequently:
+
+- some areas of the search space are sampled much more densely than others;
+- poor-performing regions may contain relatively few observations;
+- high-performing local regions may be overrepresented;
+- later observations increasingly reflect exploitation decisions; and
+- unexplored regions may still contain better solutions.
+
+This is expected behaviour in black-box optimisation, but it limits the use of the dataset for purposes requiring uniform or representative sampling.
+
+---
+
+# 9. Limitations
 
 Several limitations should be recognised.
 
-- The dataset is relatively small.
-- The search space remains sparsely sampled.
-- The objective functions remain unknown.
-- Higher-dimensional functions contain many unexplored regions.
-- Conclusions are based on limited observations rather than exhaustive sampling.
+## Small Sample Size
 
-These limitations are inherent to the nature of sequential black-box optimisation and should be considered when interpreting the optimisation results.
+The number of observations is small relative to the size of the search spaces.
+
+## High Dimensionality
+
+Functions with five to eight dimensions contain very large search spaces compared with the number of available evaluations.
+
+## Unknown Objective Functions
+
+The underlying mathematical functions are hidden, preventing analytical verification of optimisation results.
+
+## Unknown Global Optima
+
+The strongest observed value cannot be assumed to represent the true global optimum.
+
+## Adaptive Sampling
+
+The dataset reflects optimisation decisions rather than random sampling, introducing intentional sampling bias.
+
+## Model Dependence
+
+Later query decisions were partly influenced by modelling assumptions and optimisation heuristics. Different surrogate models or acquisition strategies could have produced different datasets.
+
+---
+
+# 10. Transparency and Reproducibility
+
+The repository separates the main components of the project so that the origin and role of each artefact remain clear.
+
+The following files support reproducibility:
+
+- [`README.md`](README.md) – project overview and non-technical explanation
+- [`MODEL_CARD.md`](MODEL_CARD.md) – optimisation model documentation
+- [`METHODOLOGY.md`](METHODOLOGY.md) – detailed technical methodology
+- [`OPTIMISATION_HISTORY.md`](OPTIMISATION_HISTORY.md) – evolution of the optimisation strategy
+- [`BBO_Optimisation.ipynb`](BBO_Optimisation.ipynb) – reproducible analysis
+- [`data/queries.csv`](data/queries.csv) – Stage 2 submitted queries
+- [`data/results.csv`](data/results.csv) – returned objective values
+- `data/initial/` – original initial observations
+
+Together, these artefacts document both the **data collected** and the **decision-making process that produced it**.
+
+---
+
+# 11. Dataset Status
+
+**Status: Complete**
+
+The dataset covers all **13 Stage 2 optimisation rounds from Modules 12–24**.
+
+The optimisation phase has ended and the dataset is retained as the final record of the BBO capstone project.
