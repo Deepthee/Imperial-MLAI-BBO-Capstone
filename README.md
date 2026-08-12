@@ -10,6 +10,7 @@ The challenge therefore required decisions to be made under uncertainty and with
 
 ---
 
+
 ## Project Objective
 
 The objective was to identify input combinations that maximise each of the eight unknown functions.
