@@ -1,436 +1,496 @@
-Methodology
-Black-Box Optimisation Capstone Project
-1. Methodology Overview
+# Methodology
 
-The Black-Box Optimisation (BBO) capstone project required the optimisation of eight unknown objective functions using a limited number of sequential evaluations.
+## Black-Box Optimisation Capstone Project
 
-For each function, the analytical form was hidden. The information available consisted of:
+This document describes the technical approach used throughout the Black-Box Optimisation (BBO) capstone project and explains the reasoning behind the main modelling and query-selection decisions.
 
-the dimensionality of the function;
-previously submitted input vectors;
-the corresponding observed outputs; and
-limited descriptive information supplied as part of the challenge.
+---
 
-The optimisation problem can be expressed as:
+## 1. Problem Definition
 
-x* = arg max f(x)
+The capstone project involved optimising eight unknown objective functions with different dimensionalities.
 
-where the inputs were constrained to the permitted search space and the function could only be evaluated through submitted queries.
+The analytical form of each function was hidden. For each function, I only had access to:
 
-Because exhaustive search was impossible, the project required a strategy that could learn from a small number of observations and determine where to evaluate next.
+- previously submitted input values;
+- the corresponding returned outputs;
+- the dimensionality of the function; and
+- limited descriptions provided as part of the challenge.
 
-My methodology therefore centred on Bayesian optimisation using Gaussian Process surrogate modelling, supported by exploratory analysis, structured candidate generation and function-specific judgement.
+The objective was to identify input combinations that maximised each function while working with a very limited number of evaluations.
 
-2. Why Bayesian Optimisation?
+This made the problem suitable for a sequential black-box optimisation approach:
 
-Bayesian optimisation is particularly suitable when:
+**Observe → Model → Select Query → Evaluate → Update**
 
-the objective function is unknown;
-evaluations are limited or expensive;
-derivatives are unavailable;
-relatively few observations exist; and
-uncertainty about unexplored regions matters.
+Each new result therefore became additional evidence for deciding where to search next.
 
-These characteristics closely matched the BBO challenge.
+---
 
-Instead of attempting to directly optimise the unknown function, Bayesian optimisation builds a surrogate approximation from the observations collected so far.
+## 2. Core Optimisation Approach
 
-The process used throughout the project can be summarised as:
+My main approach was based on **Bayesian optimisation using Gaussian Process (GP) surrogate modelling**.
 
-Collect existing input-output observations.
-Fit or update a surrogate model.
-Generate potential candidate points.
-Predict candidate performance and uncertainty.
-Calculate an acquisition score.
-Inspect the strongest candidates.
-Select and submit a new query.
-Observe the returned function value.
-Update the dataset.
-Repeat.
+Bayesian optimisation was appropriate because:
 
-This created a sequential learning process in which every new observation influenced subsequent decisions.
+- the objective functions were unknown;
+- gradients were unavailable;
+- the number of evaluations was limited;
+- the datasets remained small;
+- exhaustive search was impossible; and
+- uncertainty about unexplored regions was important.
 
-3. Gaussian Process Surrogate
+Instead of attempting to optimise the hidden function directly, I used the observations collected so far to approximate its behaviour.
 
-Gaussian Process (GP) regression formed the main surrogate-modelling foundation.
+The general workflow was:
 
-For each candidate point, the GP provides two particularly useful quantities:
+1. Load the available input-output observations.
+2. Analyse the existing results.
+3. Fit or update a surrogate model.
+4. Generate candidate points.
+5. Predict candidate performance and uncertainty.
+6. Use an acquisition strategy to rank candidates.
+7. Review the recommendation against historical results.
+8. Submit the selected query.
+9. Add the returned result to the dataset.
+10. Repeat the process in the next round.
 
-Predictive mean, representing the expected function value.
-Predictive uncertainty, representing the model's uncertainty around that prediction.
+---
 
-This distinction was important.
+## 3. Gaussian Process Surrogate Modelling
 
-A candidate with a high predicted value could be attractive for exploitation, while a candidate with greater uncertainty could be useful for exploration.
+Gaussian Process regression formed the main modelling foundation of the project.
 
-This made GP regression more suitable for the project than relying only on a conventional point-prediction regression model.
+For an unseen candidate, a GP provides both:
 
-4. Kernel Selection
+- a **predicted mean**, representing the expected function value; and
+- a **predictive uncertainty**, representing how confident the model is in that prediction.
 
-A Matérn-family kernel was used as the main GP modelling choice during the project.
+This was particularly useful for black-box optimisation.
 
-The Matérn kernel was appropriate because it allows less restrictive assumptions about smoothness than a very smooth kernel such as the RBF kernel.
+A candidate with a high predicted value could be selected for **exploitation**, while a candidate with greater uncertainty could be considered for **exploration**.
 
-Conceptually, the kernel determines how observations influence predictions at other locations in the search space.
+This ability to model uncertainty was one of the main reasons I preferred Gaussian Processes over conventional regression models.
 
-Kernel length scales also provide a useful interpretation of sensitivity:
+---
 
-shorter length scales imply faster variation;
-longer length scales imply smoother behaviour.
+## 4. Kernel Selection
 
-Noise handling was considered where appropriate because, with the limited observations available, local irregularities could not always be confidently distinguished from genuine function structure.
+A **Matérn-family kernel** was used as the main GP kernel.
 
-The kernel configuration was treated as a modelling choice rather than assuming that all eight functions behaved identically.
+The Matérn kernel was suitable because it can represent functions that are not perfectly smooth and therefore makes less restrictive smoothness assumptions than some alternatives such as the RBF kernel.
 
-5. Exploration and Exploitation
+Kernel length scales also provided a useful way of thinking about sensitivity:
 
-A central problem throughout the project was deciding whether to:
+- shorter length scales suggest that relatively small changes in an input may produce substantial changes in output;
+- longer length scales suggest smoother behaviour.
 
-Exploit a region already associated with strong performance,
+Noise handling was considered where appropriate because, with such limited data, it was not always possible to distinguish genuine local variation from noise.
 
-or
+---
 
-Explore a region where the surrogate remained uncertain.
+## 5. Exploration vs Exploitation
 
-The preferred balance changed as the project progressed.
+The exploration-exploitation trade-off was central to the project.
 
-Early stage
+**Exploration** involved testing less-understood areas of the search space.
 
-Exploration received greater weight because observations were sparse. Information collected early could influence many later queries.
+**Exploitation** involved refining areas that had already produced promising results.
 
-Middle stage
+The balance changed as the project progressed.
 
-The strategy became more balanced as promising regions began to emerge. Surrogate predictions, uncertainty and previous performance were considered together.
+### Early rounds
 
-Late stage
+I placed greater emphasis on exploration because very little was known about the functions.
 
-Exploitation became increasingly important because only a small number of evaluations remained.
+An exploratory query early in the project could provide information that influenced many subsequent decisions.
 
-At this point, broad exploration had less opportunity to generate useful future decisions. The remaining evaluation budget therefore became an implicit part of the optimisation strategy.
+### Middle rounds
 
-6. Expected Improvement
+As more observations became available, the strategy became more balanced.
 
-Expected Improvement (EI) was one of the acquisition strategies considered during the project.
+Promising regions could be refined while uncertainty was still used to identify potentially valuable unexplored areas.
 
-EI evaluates candidate points according to their potential to improve upon the best objective value observed so far.
+### Final rounds
 
-The parameter ξ (xi) provides a mechanism for influencing the exploration-exploitation balance.
+The strategy moved increasingly towards exploitation.
 
-A smaller ξ generally favours refinement around promising areas.
-A larger ξ can encourage greater exploration.
+With only a few evaluations remaining, broad exploration had less opportunity to produce information that could subsequently be exploited.
 
-EI was useful because it considers both predicted performance and uncertainty rather than selecting candidates using the GP mean alone.
+The remaining query budget therefore became an important part of the decision-making process.
 
-7. Upper Confidence Bound
+---
 
-Upper Confidence Bound (UCB) provided another way of combining prediction and uncertainty.
+## 6. Expected Improvement
+
+**Expected Improvement (EI)** was one of the acquisition strategies considered during the project.
+
+EI evaluates potential query points according to how much improvement they may provide over the best result observed so far.
+
+The exploration parameter `xi` influences how aggressively the acquisition function searches beyond the currently promising region.
+
+A smaller value generally encourages greater exploitation, while increasing it can encourage additional exploration.
+
+EI was useful because it considered both predicted performance and uncertainty rather than simply choosing the point with the highest GP prediction.
+
+---
+
+## 7. Upper Confidence Bound
+
+**Upper Confidence Bound (UCB)** provided another mechanism for balancing exploration and exploitation.
 
 Conceptually:
 
-UCB(x) = predicted mean + β × predictive uncertainty
+`UCB = predicted mean + beta × predictive uncertainty`
 
-where β (beta) controls the relative importance of exploration.
+The parameter `beta` determines how much importance is placed on uncertainty.
 
-Increasing β places greater emphasis on uncertain regions.
+- Higher `beta` values encourage exploration.
+- Lower `beta` values favour exploitation.
 
-Reducing β favours locations with stronger predicted performance.
+Rather than assuming one exploration setting was appropriate throughout the project, I considered the stage of the optimisation and the behaviour of each function when deciding how much exploration was justified.
 
-An important lesson from the project was that the exploration parameter does not necessarily need to remain constant throughout a limited-budget sequential optimisation problem.
+---
 
-8. Candidate Generation
+## 8. Candidate Generation
 
-The objective functions operated over continuous multidimensional spaces, making exhaustive evaluation impossible.
+Because the input spaces were continuous, it was impossible to evaluate every possible input combination.
 
-Candidate points therefore had to be generated before applying the acquisition function.
+Candidate points therefore had to be generated computationally.
 
-Sobol sequences were used as a structured candidate-generation mechanism.
+I used **Sobol sampling** as a structured method for generating candidate points across the search space.
 
-Sobol sampling provides low-discrepancy coverage of a multidimensional domain and offered more systematic coverage than relying entirely on independent random sampling.
+Sobol sequences provide relatively even coverage of multidimensional spaces and can therefore be more useful than relying entirely on independent random samples.
 
-A representative candidate-generation step is:
+A representative implementation is:
 
-from scipy.stats import qmc
+    from scipy.stats import qmc
 
-sampler = qmc.Sobol(d=n_dimensions, scramble=True)
-candidates = sampler.random_base2(m=12)
+    sampler = qmc.Sobol(d=n_dimensions, scramble=True)
+    candidates = sampler.random_base2(m=12)
 
-The GP surrogate could then evaluate these candidates computationally without requiring actual black-box evaluations.
+The surrogate model could evaluate these candidates without requiring actual black-box evaluations.
 
-The acquisition function ranked the candidates, after which the most appropriate point could be considered for submission.
+The acquisition strategy was then used to identify promising candidates for the next real submission.
 
-9. Query-Selection Workflow
+---
 
-A representative implementation of the GP and Expected Improvement workflow is:
+## 9. Representative Query-Selection Workflow
 
-import numpy as np
-from scipy.stats import norm
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import Matern
+The following illustrates the core GP and Expected Improvement approach used during the project:
 
-kernel = Matern(nu=1.5)
+    import numpy as np
+    from scipy.stats import norm
+    from sklearn.gaussian_process import GaussianProcessRegressor
+    from sklearn.gaussian_process.kernels import Matern
 
-gp = GaussianProcessRegressor(
-    kernel=kernel,
-    normalize_y=True,
-    n_restarts_optimizer=10,
-    random_state=42
-)
+    kernel = Matern(nu=1.5)
 
-gp.fit(X, y)
+    gp = GaussianProcessRegressor(
+        kernel=kernel,
+        normalize_y=True,
+        n_restarts_optimizer=10,
+        random_state=42
+    )
 
-mu, sigma = gp.predict(candidates, return_std=True)
+    gp.fit(X, y)
 
-best_observed = np.max(y)
+    mu, sigma = gp.predict(candidates, return_std=True)
 
-improvement = mu - best_observed - xi
+    best_observed = np.max(y)
 
-Z = np.divide(
-    improvement,
-    sigma,
-    out=np.zeros_like(improvement),
-    where=sigma > 0
-)
+    improvement = mu - best_observed - xi
 
-ei = improvement * norm.cdf(Z) + sigma * norm.pdf(Z)
-ei[sigma == 0] = 0
+    Z = np.divide(
+        improvement,
+        sigma,
+        out=np.zeros_like(improvement),
+        where=sigma > 0
+    )
 
-next_query = candidates[np.argmax(ei)]
+    ei = improvement * norm.cdf(Z) + sigma * norm.pdf(Z)
+    ei[sigma == 0] = 0
 
-This represents the core model-based reasoning used in the project.
+    next_query = candidates[np.argmax(ei)]
 
-The precise strategy could vary according to the function, available observations and optimisation stage.
+This represents the main model-based reasoning rather than an exact record of every historical query.
 
-10. Why Not Rely Only on the Model?
+Individual rounds were also influenced by the accumulated behaviour of each function.
 
-The GP recommendation was treated as evidence rather than an unquestionable answer.
+---
 
-With such small datasets, surrogate predictions can be sensitive to:
+## 10. Model Recommendations and Human Judgement
 
-kernel selection;
-length scales;
-noise assumptions;
-acquisition parameters;
-candidate-generation density; and
-isolated observations.
+I did not treat the surrogate model's recommendation as an unquestionable answer.
 
-Historical results were therefore retained when interpreting recommendations.
+With very small datasets, GP predictions can be sensitive to:
 
-This became particularly important during later rounds when some functions deteriorated after moving away from previously successful regions.
+- kernel choice;
+- kernel length scales;
+- assumptions about noise;
+- acquisition-function parameters;
+- candidate-generation density; and
+- individual observations.
 
-The final query decision therefore combined quantitative modelling with accumulated empirical evidence.
+For this reason, I compared model recommendations with the historical behaviour of each function.
 
-11. Alternative Models Considered
-Linear Regression
+This became particularly important during the later rounds.
 
-Linear regression provided a simple baseline and a way of examining whether individual dimensions appeared to have strong linear relationships with the objective.
+If movement away from a previously successful region repeatedly reduced performance, historical evidence could justify returning towards the earlier region rather than continuing to follow the latest direction.
 
-Its main advantage was interpretability.
+The final strategy therefore combined **model-based recommendations with evidence from previous evaluations**.
 
-However, the unknown objective functions could contain substantial nonlinear structure, limiting the usefulness of a purely linear surrogate.
+---
 
-Support Vector Machines
+## 11. Alternative Models Considered
 
-SVM concepts were useful when considering observations near boundaries between relatively strong and weak regions.
+### Linear Regression
 
-Thinking about support-vector-like observations encouraged attention to points where relatively small changes in inputs appeared to produce substantial changes in output.
+Linear regression was considered as a simple and interpretable baseline.
 
-SVM reasoning therefore contributed to the interpretation of the search space, although it did not replace GP regression as the primary surrogate.
+It could provide indications of whether particular variables had an approximately linear relationship with the output.
 
-Neural Networks
+However, the unknown functions were likely to contain nonlinear relationships, limiting the usefulness of a purely linear model.
 
-Neural networks were considered because of their ability to represent complex nonlinear interactions.
+### Support Vector Machines
+
+SVM concepts influenced how I thought about observations close to transitions between stronger and weaker regions.
+
+Points where relatively small input changes produced substantial output changes could be viewed as behaving similarly to support-vector or boundary observations.
+
+SVM reasoning therefore helped with interpretation but did not replace the GP as the primary surrogate.
+
+### Neural Networks
+
+Neural networks were considered because they can represent complex nonlinear relationships.
 
 However, the BBO datasets remained extremely small.
 
-A neural network introduces many parameters and therefore carries a substantial risk of fitting the existing observations without generalising effectively to unexplored locations.
+Using a highly flexible neural network with so few observations created a significant risk of overfitting.
 
-For this reason, neural-network concepts informed parts of the analysis but did not replace the GP-based optimisation framework.
+For this reason, neural-network concepts informed the analysis but did not replace Gaussian Process modelling as the core optimisation approach.
 
-12. Hyperparameter Tuning
+---
 
-Hyperparameter tuning was approached conservatively.
+## 12. Hyperparameter Tuning
+
+Hyperparameter tuning was deliberately conservative.
 
 Relevant parameters included:
 
-GP kernel configuration;
-kernel length scales;
-noise assumptions;
-EI parameter ξ;
-UCB exploration parameter β; and
-candidate sample size.
+- GP kernel configuration;
+- kernel length scales;
+- noise assumptions;
+- Expected Improvement `xi`;
+- UCB `beta`; and
+- number of candidate points.
 
-With very small datasets, aggressive hyperparameter optimisation can produce misleading confidence because the model may simply become highly adapted to the existing observations.
+With such small datasets, aggressive hyperparameter optimisation could make a model fit the existing observations extremely well without improving its ability to identify useful new query points.
 
-Consequently, tuning was used primarily to investigate the stability of recommendations rather than to maximise conventional predictive performance.
+I therefore used tuning primarily to understand the sensitivity and stability of the optimisation strategy rather than attempting to maximise conventional predictive accuracy.
 
-This was an important distinction between standard supervised learning and the BBO problem.
+---
 
-13. Clustering-Inspired Analysis
+## 13. Clustering-Inspired Reasoning
 
-As observations accumulated, I also considered whether successful queries formed local groups or clusters.
+As more observations accumulated, I began considering whether successful queries formed local groups or **clusters**.
 
-This provided another way to reason about:
+This helped me think about:
 
-recurring promising regions;
-distances between high-performing points;
-whether a query represented local refinement or genuine exploration; and
-whether repeated observations were becoming redundant.
+- recurring promising regions;
+- distances between high-performing observations;
+- whether a new query represented genuine exploration;
+- whether it was tightening an existing promising region; and
+- whether repeated queries were becoming redundant.
 
-The clustering perspective complemented Bayesian optimisation rather than replacing it.
+Clustering did not replace Bayesian optimisation.
 
-It helped translate a collection of individual observations into identifiable regions of interest.
+Instead, it provided another perspective for interpreting the growing dataset and identifying potentially meaningful regions.
 
-14. PCA-Inspired Analysis
+---
 
-Principal Component Analysis (PCA) concepts influenced how I thought about the higher-dimensional functions.
+## 14. PCA-Inspired Reasoning
 
-As dimensionality increased, the search space expanded rapidly and visual interpretation became impractical.
+Principal Component Analysis (PCA) influenced how I thought about higher-dimensional functions.
 
-The PCA principle of preserving important variation while reducing redundancy encouraged me to consider whether:
+As dimensionality increased, visualising the complete search space became impossible.
 
-certain dimensions appeared more influential;
-repeated movements along some dimensions added little information;
-new observations were genuinely informative or largely redundant; and
-attention could be concentrated on directions associated with larger changes in output.
+The underlying PCA principle of retaining important variation while reducing redundancy encouraged me to ask:
 
-PCA was therefore primarily used as a conceptual framework for interpreting dimensional relevance rather than as a universal preprocessing transformation.
+- Which dimensions appear to influence the output most?
+- Which movements repeatedly produce little change?
+- Are new queries adding genuinely new information?
+- Could attention be concentrated on the directions associated with greater variation?
 
-15. Reinforcement-Learning Perspective
+PCA was therefore primarily used as a conceptual framework rather than being applied as a universal preprocessing transformation.
 
-The final stage of the project introduced a useful reinforcement-learning interpretation.
+---
 
-Each submitted query can be viewed as an action.
+## 15. Reinforcement-Learning Perspective
 
-The resulting objective value provides feedback.
+The final stages of the programme introduced another useful interpretation of the optimisation process.
 
-That feedback changes expectations about the usefulness of different regions of the search space.
+A submitted query can be viewed as an **action**.
+
+The resulting function value provides **feedback or reward**.
+
+That feedback changes expectations about which regions of the search space are promising.
 
 The next query is then selected using the updated information.
 
-This resembles the exploration-exploitation problem encountered in multi-armed bandits and reinforcement learning.
+This resembles the exploration-exploitation problem found in reinforcement learning and multi-armed bandits.
 
-Early rounds involved greater exploration, while later rounds increasingly exploited strategies and regions that had demonstrated stronger rewards.
+The comparison also demonstrates why an unsuccessful query is not necessarily wasted. Even a poor result provides information that can influence future decisions.
 
-The analogy also highlights why unsuccessful evaluations were still useful: they changed the information available for future decisions.
+---
 
-16. Function-Specific Decision Making
+## 16. Function-Specific Strategy
 
-By the later rounds, I deliberately avoided applying one identical policy to every function.
+One of the most important changes during the project was moving away from the idea that all eight functions should use exactly the same optimisation behaviour.
 
-For example:
+By the later rounds, several different patterns had emerged.
 
-Function 5 responded well to local refinement, supporting continued exploitation.
-Function 2 showed sensitivity to relatively small input changes, requiring greater caution.
-Function 7 demonstrated the value of returning towards an earlier strong region after later deterioration.
-Function 8 showed diminishing improvements, suggesting a late-stage plateau.
+### Function 2
 
-These differences reinforced the idea that optimisation strategies should respond to observed function behaviour rather than follow a rigid global rule.
+Function 2 showed sensitivity to relatively small changes in its inputs.
 
-17. Tools and Libraries
+This made aggressive local movement risky and demonstrated the importance of retaining historical results when selecting subsequent queries.
 
-The implementation uses the Python scientific-computing ecosystem.
+### Function 5
 
-Primary libraries include:
+Function 5 responded particularly well to local refinement.
 
-NumPy
-Pandas
-SciPy
-scikit-learn
-Matplotlib
-Jupyter
+Continued exploitation of the promising region produced a final-round value of approximately **1368.74**.
 
-Their main roles are:
+### Function 7
 
-Library	Purpose
-NumPy	Numerical operations and arrays
-Pandas	Query and result data management
-SciPy	Statistical functions and Sobol sampling
-scikit-learn	Gaussian Process and baseline ML models
-Matplotlib	Visualisation
-Jupyter	Reproducible analysis and documentation
+Function 7 demonstrated the value of returning towards an earlier successful region after later movements produced weaker results.
 
-The relatively lightweight stack was appropriate for the scale of the project and avoided introducing unnecessary framework complexity.
+The final-round value recovered to approximately **1.35**.
 
-18. Reproducibility
+### Function 8
 
-The repository separates the project into several components.
+Function 8 showed increasingly small improvements during the later rounds.
 
-Data
-data/inputs.csv
-data/outputs.csv
+The final value of approximately **9.570335** suggested that the search had reached a region of diminishing returns.
 
-These files record the observed query history.
+These differences reinforced the need for **function-specific optimisation decisions rather than a rigid global policy**.
 
-Analysis
-notebooks/BBO_Optimisation.ipynb
+---
 
-The notebook demonstrates the modelling and query-selection workflow.
+## 17. Tools and Libraries
 
-Documentation
-README.md
-DATASHEET.md
-MODEL_CARD.md
-METHODOLOGY.md
-OPTIMISATION_HISTORY.md
+The project used a lightweight Python scientific-computing stack.
 
-Together, these files explain not only what was done, but also why the decisions were made.
+| Library | Purpose |
+| --- | --- |
+| NumPy | Numerical operations and arrays |
+| Pandas | Managing query and result data |
+| SciPy | Statistical functions and Sobol sampling |
+| scikit-learn | Gaussian Process and baseline ML models |
+| Matplotlib | Visualisation |
+| Jupyter | Reproducible analysis and documentation |
+
+This stack was appropriate for the relatively small datasets involved and avoided unnecessary framework complexity.
+
+---
+
+## 18. Reproducibility
+
+The repository separates data, analysis and documentation.
+
+### Data
+
+- `data/inputs.csv`
+- `data/outputs.csv`
+
+These files contain the recorded query and evaluation history.
+
+### Analysis
+
+- `notebooks/BBO_Optimisation.ipynb`
+
+This notebook demonstrates the core modelling and query-selection workflow.
+
+### Documentation
+
+- `README.md`
+- `DATASHEET.md`
+- `MODEL_CARD.md`
+- `METHODOLOGY.md`
+- `OPTIMISATION_HISTORY.md`
+
+Together, these files explain what was done, why the decisions were made and how the approach evolved.
 
 The hidden objective functions themselves cannot be reproduced because they were evaluated externally through the capstone platform.
 
-19. Limitations
+---
 
-Several limitations should be considered when interpreting the methodology.
+## 19. Limitations
 
-Limited observations
+### Small Dataset
 
-Even at the end of the challenge, the number of observations remained extremely small for learning complex multidimensional functions.
+The number of observations remained very small for learning potentially complex objective functions.
 
-Curse of dimensionality
+### Curse of Dimensionality
 
-As dimensionality increased, the observations represented an increasingly tiny fraction of the possible search space.
+As dimensionality increased, the observations represented an increasingly small proportion of the possible search space.
 
-Surrogate assumptions
+### Surrogate Assumptions
 
-GP modelling assumes sufficient regularity for relationships between observations to provide useful predictions.
+Gaussian Process modelling assumes that sufficient underlying structure exists for previous observations to provide useful information about nearby or related regions.
 
-Highly discontinuous or irregular objective functions could violate these assumptions.
+### Hyperparameter Sensitivity
 
-Hyperparameter sensitivity
+Different kernels and acquisition-function settings can generate different query recommendations.
 
-Different kernels or acquisition settings can produce different recommendations.
+### Sequential Sampling Bias
 
-No guarantee of global optimality
+Later observations became increasingly concentrated around regions believed to be promising.
 
-The strongest observed result cannot be assumed to be the true global maximum.
+The final dataset is therefore not a uniformly sampled representation of each complete search space.
 
-Sequential sampling bias
+### No Guarantee of Global Optimality
 
-Later observations were deliberately concentrated around regions considered promising. The final dataset is therefore not a uniformly sampled representation of the complete search space.
+The strongest value observed during the challenge cannot be assumed to represent the true global maximum.
 
-20. Methodological Lessons
+---
 
-The project reinforced several broader principles:
+## 20. Key Methodological Lessons
 
-Start simple.
-Model complexity should increase only when the available data supports it.
-Treat uncertainty as information.
-Knowing where a model is uncertain can be as valuable as knowing where it predicts a strong outcome.
-Adapt exploration over time.
-The value of exploration changes as the remaining evaluation budget decreases.
-Preserve historical evidence.
-Recent observations should not automatically override earlier strong results.
-Use models to support decisions, not replace judgement.
-Surrogate recommendations are conditional on modelling assumptions.
-Avoid unnecessary experimentation.
-With limited evaluations, every query has an opportunity cost.
-Different functions may require different policies.
-A strategy that works well for one objective function may perform poorly for another.
-21. Conclusion
+The project reinforced several important principles:
 
-The final methodology was a small-data, uncertainty-aware and adaptive optimisation framework centred on Gaussian Process surrogate modelling and Bayesian optimisation.
+1. **Start with relatively simple models.**  
+   Additional complexity should be introduced only when supported by the available data.
 
-The technical approach evolved as additional observations became available, but the central principle remained consistent: use every evaluation to improve the quality of the next decision.
+2. **Treat uncertainty as useful information.**  
+   Knowing where the model is uncertain can be as valuable as knowing where it predicts strong performance.
 
-Concepts from neural networks, hyperparameter tuning, clustering, PCA and reinforcement learning added different perspectives to the problem, but they did not justify replacing a method that remained appropriate for the available data.
+3. **Change the exploration-exploitation balance over time.**  
+   The value of exploration changes as the remaining evaluation budget decreases.
 
-The most important methodological development was therefore not increasing model complexity. It was learning when to explore, when to exploit, when to trust the surrogate and when historical evidence justified challenging its recommendation.
+4. **Preserve historical evidence.**  
+   Recent observations should not automatically replace information from earlier successful regions.
+
+5. **Use models to support decisions rather than replace judgement.**  
+   Every surrogate recommendation depends on assumptions.
+
+6. **Recognise the opportunity cost of each experiment.**  
+   With a limited evaluation budget, every query matters.
+
+7. **Adapt the strategy to individual functions.**  
+   A method that performs well for one objective function may not be appropriate for another.
+
+---
+
+## 21. Conclusion
+
+The final methodology was a **small-data, uncertainty-aware and adaptive optimisation approach** centred on Gaussian Process surrogate modelling and Bayesian optimisation.
+
+The approach evolved as additional observations became available, but the central principle remained consistent:
+
+**Use every evaluation to improve the quality of the next decision.**
+
+Concepts from neural networks, hyperparameter tuning, clustering, PCA and reinforcement learning provided additional ways of interpreting the optimisation problem without unnecessarily replacing the GP-based foundation.
+
+The most important development was therefore not increasing model complexity. It was learning **when to explore, when to exploit, when to trust the surrogate and when historical evidence justified challenging its recommendation**.
